@@ -1,25 +1,66 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 export default function VotingButtons({ promiseId }: { promiseId: number }) {
+  const [user, setUser] = useState<User | null>(null)
   const [isVoting, setIsVoting] = useState(false)
-  const [voted, setVoted] = useState(false)
+  const [hasVoted, setHasVoted] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const checkUserAndVote = async () => {
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+
+      // Check if user has already voted on this promise
+      if (session?.user) {
+        const { data: existingVote } = await supabase
+          .from('promise_votes')
+          .select('id')
+          .eq('promise_id', promiseId)
+          .eq('user_id', session.user.id)
+          .single()
+
+        setHasVoted(!!existingVote)
+      }
+      
+      setLoading(false)
+    }
+
+    checkUserAndVote()
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      if (!session?.user) {
+        setHasVoted(false)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [promiseId])
 
   const handleVote = async (status: string) => {
+    if (!user) {
+      alert('Please sign in to vote!')
+      return
+    }
+
     setIsVoting(true)
     
     try {
-      // Generate unique ID for local testing
-      const userIP = `user_${Date.now()}_${Math.random()}`
-      
-      // Check if user already voted (this won't work perfectly locally, but that's ok for testing)
+      // Double-check if user already voted
       const { data: existingVote } = await supabase
         .from('promise_votes')
         .select('id')
         .eq('promise_id', promiseId)
-        .eq('user_ip', userIP)
+        .eq('user_id', user.id)
         .single()
 
       if (existingVote) {
@@ -34,12 +75,12 @@ export default function VotingButtons({ promiseId }: { promiseId: number }) {
         .insert({
           promise_id: promiseId,
           vote_status: status,
-          user_ip: userIP
+          user_id: user.id
         })
 
       if (error) throw error
 
-      setVoted(true)
+      setHasVoted(true)
       // Refresh page to show updated results
       window.location.reload()
       
@@ -51,10 +92,26 @@ export default function VotingButtons({ promiseId }: { promiseId: number }) {
     setIsVoting(false)
   }
 
-  if (voted) {
+  if (loading) {
     return (
       <div className="border-t pt-4">
-        <p className="text-sm text-green-600">✓ Thank you for voting!</p>
+        <p className="text-sm text-gray-500">Loading...</p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="border-t pt-4">
+        <p className="text-sm text-gray-600">Sign in to vote on promises</p>
+      </div>
+    )
+  }
+
+  if (hasVoted) {
+    return (
+      <div className="border-t pt-4">
+        <p className="text-sm text-green-600">✓ You have voted on this promise</p>
       </div>
     )
   }

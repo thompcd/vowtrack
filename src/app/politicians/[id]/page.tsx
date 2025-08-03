@@ -17,21 +17,17 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
     const threeMonthsAgo = new Date()
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
 
-    const { data: promises, error: promisesError } = await supabase
+  // Fetch promises with vote counts (including promises with no votes)
+  const { data: promises } = await supabase
     .from('promises')
     .select(`
-        *,
-        promise_votes!inner(
-        vote_status,
-        created_at
-        )
+      *,
+      promise_votes(vote_status)
     `)
     .eq('politician_id', id)
-    .gte('promise_votes.created_at', threeMonthsAgo.toISOString())
     .order('date_made', { ascending: false })
 
     console.log('Promises with recent votes:', promises)
-    console.log('Error:', promisesError)
 
 // Function to calculate vote percentages and determine consensus
 const calculateVotes = (promise: any) => {
