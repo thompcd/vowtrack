@@ -13,7 +13,7 @@ export default function Home() {
             height={60}
             className="rounded-full mr-4"
           />
-          <h1 className="text-4xl font-bold">
+          <h1 className="text-4xl text-gray-800 font-bold">
             VowTrack
           </h1>
         </div>
