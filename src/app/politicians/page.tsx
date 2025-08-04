@@ -12,6 +12,17 @@ export default async function Politicians() {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-3xl text-gray-800 font-bold mb-8">Politicians</h1>
+
+        {/* Add this after the h1 and before the grid */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Politicians</h1>
+        <Link 
+          href="/politicians/add"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          + Add Politician
+        </Link>
+      </div>
         
         <div className="grid gap-4">
           {politicians?.map((politician) => (

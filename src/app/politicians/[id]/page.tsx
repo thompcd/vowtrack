@@ -102,10 +102,16 @@ const calculateVotes = (promise: any) => {
   </div>
 </div>
 
-        {/* Promises section */}
-        <div className="mb-6">
-          <h2 className="text-2xl text-gray-800 font-bold mb-4">Promises ({promises?.length || 0})</h2>
-        </div>
+      {/* Update the promises section header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Promises ({promises?.length || 0})</h2>
+        <Link 
+          href={`/politicians/${id}/add-promise`}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          + Add Promise
+        </Link>
+      </div>
 
         {/* Promises list */}
         <div className="space-y-4">
