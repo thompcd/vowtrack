@@ -2,6 +2,8 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import VotingButtons from './VotingButtons'
 import Image from 'next/image'
+import { calculatePoliticianScore } from '@/lib/scoring'
+import ScoreCard from '@/components/ScoreCard'
 
 export default async function PoliticianPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -28,6 +30,8 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
     .order('date_made', { ascending: false })
 
     console.log('Promises with recent votes:', promises)
+
+  const score = calculatePoliticianScore(promises || [])
 
 // Function to calculate vote percentages and determine consensus
 const calculateVotes = (promise: any) => {
@@ -62,6 +66,8 @@ const calculateVotes = (promise: any) => {
   percentages.notStarted = Math.round((counts['Not Started'] || 0) / total * 100)
 
   // Determine consensus (highest percentage) - now TypeScript knows counts values are numbers
+  
+  // Use the original promises data if promisesWithVotes isn't working
   const maxVotes = Math.max(...Object.values(counts))
   const consensusStatus = Object.keys(counts).find(key => counts[key] === maxVotes) || 'Unclear'
 
@@ -101,6 +107,11 @@ const calculateVotes = (promise: any) => {
     </div>
   </div>
 </div>
+
+      {/* Score Card */}
+      <div className="mb-8">
+        <ScoreCard score={score} size="large" />
+      </div>
 
       {/* Update the promises section header */}
       <div className="flex justify-between items-center mb-6">
