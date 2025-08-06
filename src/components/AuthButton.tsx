@@ -7,6 +7,10 @@ import type { User } from '@supabase/supabase-js'
 export default function AuthButton() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showSignInOptions, setShowSignInOptions] = useState(false)
+
+  // Feature flag for Twitter login
+  const twitterEnabled = process.env.NEXT_PUBLIC_ENABLE_TWITTER_LOGIN === 'true'
 
   useEffect(() => {
     // Handle auth state changes
@@ -54,16 +58,15 @@ export default function AuthButton() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const handleSignIn = async () => {
+  const handleEmailSignIn = async () => {
     const email = prompt('Enter your email:')
     if (!email) return
 
-    console.log('Attempting sign in for:', email)
+    console.log('Attempting email sign in for:', email)
     
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        // Don't use callback, just redirect to the same page
         emailRedirectTo: window.location.origin,
       },
     })
@@ -73,12 +76,32 @@ export default function AuthButton() {
       alert('Error: ' + error.message)
     } else {
       alert('Check your email for the login link!')
+      setShowSignInOptions(false)
     }
+  }
+
+  const handleSocialSignIn = async (provider: 'twitter') => {
+    console.log(`Attempting ${provider} sign in`)
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: window.location.origin,
+      },
+    })
+
+    if (error) {
+      console.error(`${provider} sign in error:`, error)
+      alert(`Error signing in with ${provider}: ` + error.message)
+    }
+    
+    setShowSignInOptions(false)
   }
 
   const handleSignOut = async () => {
     console.log('Signing out...')
     await supabase.auth.signOut()
+    setShowSignInOptions(false)
   }
 
   if (loading) {
@@ -86,11 +109,27 @@ export default function AuthButton() {
   }
 
   if (user) {
+    const displayName = user.user_metadata?.full_name || 
+                       user.user_metadata?.name || 
+                       user.email || 
+                       'User'
+    
+    const avatar = user.user_metadata?.avatar_url || user.user_metadata?.picture
+
     return (
       <div className="flex items-center space-x-4">
-        <span className="text-sm text-gray-700 font-medium">
-          ✓ {user.email}
-        </span>
+        <div className="flex items-center space-x-2">
+          {avatar && (
+            <img 
+              src={avatar} 
+              alt="Avatar" 
+              className="w-6 h-6 rounded-full"
+            />
+          )}
+          <span className="text-sm text-gray-700 font-medium">
+            {displayName}
+          </span>
+        </div>
         <button
           onClick={handleSignOut}
           className="text-sm text-red-600 hover:underline"
@@ -101,12 +140,47 @@ export default function AuthButton() {
     )
   }
 
+  // Show sign in options - conditional Twitter button
   return (
-    <button
-      onClick={handleSignIn}
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
-    >
-      Sign In
-    </button>
+    <div className="relative">
+      {!showSignInOptions ? (
+        <button
+          onClick={() => setShowSignInOptions(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+        >
+          Sign In
+        </button>
+      ) : (
+        <div className="absolute right-0 top-0 bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-48 z-50">
+          <div className="space-y-3">
+            {/* Only show Twitter if feature flag is enabled */}
+            {twitterEnabled && (
+              <button
+                onClick={() => handleSocialSignIn('twitter')}
+                className="w-full flex items-center justify-center space-x-2 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 text-sm"
+              >
+                <span>𝕏</span>
+                <span>Continue with X</span>
+              </button>
+            )}
+            
+            <button
+              onClick={handleEmailSignIn}
+              className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+            >
+              <span>✉️</span>
+              <span>Continue with Email</span>
+            </button>
+            
+            <button
+              onClick={() => setShowSignInOptions(false)}
+              className="w-full text-gray-500 text-sm hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
