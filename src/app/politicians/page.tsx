@@ -27,13 +27,13 @@ export default async function Politicians() {
   politiciansWithScores.sort((a, b) => b.score.overall_score - a.score.overall_score)
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-page py-12">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Politicians</h1>
+          <h1 className="text-3xl font-bold text-primary">Politicians</h1>
           <Link 
             href="/politicians/add"
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="bg-status-complete text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
           >
             + Add Politician
           </Link>
@@ -41,7 +41,7 @@ export default async function Politicians() {
         
         <div className="grid gap-6">
           {politiciansWithScores.map((politician) => (
-            <div key={politician.id} className="bg-white p-6 rounded-lg shadow">
+            <div key={politician.id} className="bg-surface p-6 rounded-lg shadow border border-default">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Politician Info */}
                 <div className="lg:col-span-2">
@@ -56,14 +56,14 @@ export default async function Politicians() {
                       />
                     )}
                     <div className="flex-1">
-                      <h2 className="text-xl font-bold">{politician.name}</h2>
-                      <p className="text-gray-800 font-medium">{politician.position}</p>
+                      <h2 className="text-xl font-bold text-primary">{politician.name}</h2>
+                      <p className="text-secondary font-medium">{politician.position}</p>
                       {politician.party && (
-                        <p className="text-gray-700">{politician.party}</p>
+                        <p className="text-muted">{politician.party}</p>
                       )}
                       <Link 
                         href={`/politicians/${politician.id}`}
-                        className="text-blue-600 hover:underline mt-2 inline-block font-medium"
+                        className="text-brand-primary hover:text-brand-primary-hover mt-2 inline-block font-medium transition-colors"
                       >
                         View Details →
                       </Link>
@@ -83,7 +83,7 @@ export default async function Politicians() {
         </div>
 
         {politiciansWithScores.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted">
             No politicians found. Be the first to add one!
           </div>
         )}

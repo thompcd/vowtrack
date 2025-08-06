@@ -146,18 +146,18 @@ export default function AuthButton() {
       {!showSignInOptions ? (
         <button
           onClick={() => setShowSignInOptions(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+          className="bg-brand-primary text-white px-4 py-2 rounded hover:bg-brand-primary-hover text-sm transition-colors"
         >
           Sign In
         </button>
       ) : (
-        <div className="absolute right-0 top-0 bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-48 z-50">
+        <div className="absolute right-0 top-0 bg-surface border border-default rounded-lg shadow-lg p-4 min-w-48 z-50">
           <div className="space-y-3">
-            {/* Only show Twitter if feature flag is enabled */}
+            {/* Twitter button if enabled */}
             {twitterEnabled && (
               <button
                 onClick={() => handleSocialSignIn('twitter')}
-                className="w-full flex items-center justify-center space-x-2 bg-black text-white px-4 py-2 rounded hover:bg-gray-800 text-sm"
+                className="w-full flex items-center justify-center space-x-2 bg-neutral-900 text-white px-4 py-2 rounded hover:bg-neutral-800 text-sm transition-colors"
               >
                 <span>𝕏</span>
                 <span>Continue with X</span>
@@ -166,7 +166,7 @@ export default function AuthButton() {
             
             <button
               onClick={handleEmailSignIn}
-              className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+              className="w-full flex items-center justify-center space-x-2 bg-brand-primary text-white px-4 py-2 rounded hover:bg-brand-primary-hover text-sm transition-colors"
             >
               <span>✉️</span>
               <span>Continue with Email</span>
@@ -174,7 +174,7 @@ export default function AuthButton() {
             
             <button
               onClick={() => setShowSignInOptions(false)}
-              className="w-full text-gray-500 text-sm hover:text-gray-700"
+              className="w-full text-muted text-sm hover:text-secondary transition-colors"
             >
               Cancel
             </button>
