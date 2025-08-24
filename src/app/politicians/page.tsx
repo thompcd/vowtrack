@@ -33,12 +33,11 @@ export default async function Politicians() {
           <h1 className="text-3xl font-bold text-primary">Politicians</h1>
           <Link 
             href="/politicians/add"
-            className="bg-status-complete text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+            className="bg-brand-primary text-white px-4 py-2 rounded hover:bg-brand-primary-hover transition-colors"
           >
             + Add Politician
           </Link>
         </div>
-        
         <div className="grid gap-6">
           {politiciansWithScores.map((politician) => (
             <div key={politician.id} className="bg-surface p-6 rounded-lg shadow border border-default">
