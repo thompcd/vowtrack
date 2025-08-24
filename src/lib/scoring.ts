@@ -46,8 +46,8 @@ export function calculatePoliticianScore(promises: Promise[]): ScoreResult {
     totalVotes += voteCount
 
     // Count votes by status
-    const voteCounts = votes.reduce((acc: any, vote) => {
-      acc[vote.vote_status] = (acc[vote.vote_status] || 0) + 1
+    const voteCounts = votes.reduce<Record<string, number>>((acc, vote) => {
+      acc[vote.vote_status] = (acc[vote.vote_status] ?? 0) + 1
       return acc
     }, {})
 
@@ -98,7 +98,12 @@ export function calculatePoliticianScore(promises: Promise[]): ScoreResult {
   }
 }
 
-function calculateConsensusStrength(breakdown: any, totalVotes: number): number {
+function calculateConsensusStrength(
+  breakdown: ScoreResult['breakdown'],
+  totalVotes: number
+): number {
+  if (totalVotes === 0) return 0
+
   const percentages = [
     breakdown.complete / totalVotes,
     breakdown.in_progress / totalVotes,
@@ -106,12 +111,9 @@ function calculateConsensusStrength(breakdown: any, totalVotes: number): number 
     breakdown.not_started / totalVotes
   ]
 
-  // Calculate entropy (lower entropy = higher consensus)
-  const entropy = -percentages.reduce((sum, p) => {
-    return p > 0 ? sum + p * Math.log2(p) : sum
-  }, 0)
+  const entropy = -percentages.reduce((sum, p) => (p > 0 ? sum + p * Math.log2(p) : sum), 0)
 
-  // Convert to 0-100 scale (2 is max entropy for 4 categories)
+  // Max entropy for 4 categories = log2(4) = 2
   return Math.round((1 - entropy / 2) * 100)
 }
 

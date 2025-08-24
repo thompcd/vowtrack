@@ -56,12 +56,13 @@ export default function AddPolitician() {
       alert(`${formData.name} added successfully!`)
       router.push(`/politicians/${data.id}`)
       
-    } catch (error: any) {
+    } catch (error: unknown) {
   console.error('Error adding politician:', error)
-  if (error.message?.includes('new row violates row-level security')) {
+  const message = error instanceof Error ? error.message : String(error)
+  if (message.includes('new row violates row-level security')) {
     alert('You must be signed in to add politicians')
   } else {
-    alert('Error adding politician: ' + (error.message || 'Unknown error'))
+    alert('Error adding politician: ' + (message || 'Unknown error'))
   }
 }
 

@@ -8,7 +8,7 @@ import type { User } from '@supabase/supabase-js'
 
 export default function AddPromise({ params }: { params: Promise<{ id: string }> }) {
   const [user, setUser] = useState<User | null>(null)
-  const [politician, setPolitician] = useState<any>(null)
+  const [politician, setPolitician] = useState<{ id: number; name: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const [politicianId, setPoliticianId] = useState<string>('')
   const [formData, setFormData] = useState({

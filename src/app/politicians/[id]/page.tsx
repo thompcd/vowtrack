@@ -34,47 +34,62 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
   const score = calculatePoliticianScore(promises || [])
 
 // Function to calculate vote percentages and determine consensus
-const calculateVotes = (promise: any) => {
-  const votes = promise.promise_votes || []
+type VoteStatus = 'Complete' | 'In Progress' | 'Broken' | 'Not Started'
+type PromiseVote = { vote_status: VoteStatus }
+type PromiseWithVotes = {
+  id: string
+  title: string
+  description?: string
+  date_made?: string
+  source_url?: string
+  promise_votes?: PromiseVote[]
+}
+
+const calculateVotes = (promise: PromiseWithVotes) => {
+  const votes = promise.promise_votes ?? []
   const total = votes.length
-  
-  // Always return percentages structure, even when no votes
+
   const percentages = {
     complete: 0,
     inProgress: 0,
     broken: 0,
-    notStarted: 0
+    notStarted: 0,
   }
-  
+
   if (total === 0) {
-    return { 
-      total: 0, 
-      consensus: 'No votes yet', 
-      percentages 
+    return {
+      total: 0,
+      consensus: 'No votes yet',
+      percentages,
     }
   }
 
-  const counts: Record<string, number> = votes.reduce((acc: Record<string, number>, vote: any) => {
-    acc[vote.vote_status] = (acc[vote.vote_status] || 0) + 1
-    return acc
-  }, {})
+  const counts: Record<VoteStatus, number> = {
+    'Complete': 0,
+    'In Progress': 0,
+    'Broken': 0,
+    'Not Started': 0,
+  }
 
-  // Calculate percentages
-  percentages.complete = Math.round((counts['Complete'] || 0) / total * 100)
-  percentages.inProgress = Math.round((counts['In Progress'] || 0) / total * 100)
-  percentages.broken = Math.round((counts['Broken'] || 0) / total * 100)
-  percentages.notStarted = Math.round((counts['Not Started'] || 0) / total * 100)
+  for (const vote of votes) {
+    counts[vote.vote_status]++
+  }
 
-  // Determine consensus (highest percentage) - now TypeScript knows counts values are numbers
-  
-  // Use the original promises data if promisesWithVotes isn't working
+  percentages.complete = Math.round((counts['Complete'] / total) * 100)
+  percentages.inProgress = Math.round((counts['In Progress'] / total) * 100)
+  percentages.broken = Math.round((counts['Broken'] / total) * 100)
+  percentages.notStarted = Math.round((counts['Not Started'] / total) * 100)
+
   const maxVotes = Math.max(...Object.values(counts))
-  const consensusStatus = Object.keys(counts).find(key => counts[key] === maxVotes) || 'Unclear'
+  const consensusStatus =
+    (Object.keys(counts) as VoteStatus[]).find(
+      (key) => counts[key] === maxVotes && counts[key] > 0
+    ) || 'Unclear'
 
   return {
     total,
     consensus: consensusStatus,
-    percentages
+    percentages,
   }
 }
 
