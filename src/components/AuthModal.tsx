@@ -117,7 +117,7 @@ export default function AuthModal({ onClose, initialEmail = '', enableTwitter, r
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 rounded-lg border border-default bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              className="w-full px-4 py-2 rounded-lg border border-default bg-surface text-sm text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
               placeholder="you@example.com"
             />
           </div>

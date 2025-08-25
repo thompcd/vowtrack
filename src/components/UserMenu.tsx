@@ -1,7 +1,8 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import ThemeSelector from './ThemeSelector'
+// Removed ThemeSelector dropdown; using ThemeModeToggle instead
+import ThemeModeToggle from './ThemeModeToggle'
 import Image from 'next/image'
 import AuthModal from './AuthModal'
 
@@ -98,17 +99,14 @@ export default function UserMenu() {
               {user.email && <p className="text-muted text-xs truncate">{user.email}</p>}
             </div>
           </div>
-          <div className="p-4 space-y-4 max-h-[50vh] overflow-y-auto">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-2">Theme</p>
-              <ThemeSelector />
-            </div>
+          <div className="relative p-4 space-y-4 pb-16 max-h-[50vh] overflow-y-auto">
             <button
               onClick={handleSignOut}
               className="w-full text-left px-4 py-2 rounded bg-status-broken/40 text-status-broken hover:bg-status-broken/60 text-sm font-medium transition-colors"
             >
               Sign Out
             </button>
+            <ThemeModeToggle className="absolute bottom-3 right-3" />
           </div>
         </div>
       )}
