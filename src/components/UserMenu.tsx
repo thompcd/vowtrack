@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import ThemeSelector from './ThemeSelector'
 import Image from 'next/image'
+import AuthModal from './AuthModal'
 
 interface UserMeta {
   full_name?: string
@@ -35,18 +36,7 @@ export default function UserMenu() {
     return () => { subscription.unsubscribe(); window.removeEventListener('mousedown', clickHandler) }
   }, [])
 
-  const handleEmailSignIn = async () => {
-    const email = prompt('Enter your email:')
-    if (!email) return
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
-    if (error) alert('Error: ' + error.message)
-    else alert('Check your email for the login link!')
-  }
-
-  const handleTwitterSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'twitter', options: { redirectTo: window.location.origin } })
-    if (error) alert('Error signing in with X: ' + error.message)
-  }
+  const [authOpen, setAuthOpen] = useState(false)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -59,22 +49,20 @@ export default function UserMenu() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-2">
+      <>
         <button
-          onClick={handleEmailSignIn}
+          onClick={() => setAuthOpen(true)}
           className="bg-brand-primary text-white px-4 py-2 rounded text-sm font-medium hover:bg-brand-primary-hover transition-colors"
         >
           Sign In
         </button>
-        {twitterEnabled && (
-          <button
-            onClick={handleTwitterSignIn}
-            className="hidden sm:inline px-3 py-2 rounded text-sm border border-default text-secondary hover:text-primary hover:bg-neutral-50 transition-colors"
-          >
-            X
-          </button>
+        {authOpen && (
+          <AuthModal
+            onClose={() => setAuthOpen(false)}
+            enableTwitter={twitterEnabled}
+          />
         )}
-      </div>
+      </>
     )
   }
 
@@ -96,7 +84,7 @@ export default function UserMenu() {
           <span className="text-sm font-semibold text-primary">{initials}</span>
         )}
       </button>
-      {open && (
+  {open && (
         <div
           className="absolute right-0 mt-2 w-72 bg-surface border border-default rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in"
           role="menu"
@@ -123,6 +111,9 @@ export default function UserMenu() {
             </button>
           </div>
         </div>
+      )}
+      {authOpen && !open && (
+        <AuthModal onClose={() => setAuthOpen(false)} enableTwitter={twitterEnabled} />
       )}
     </div>
   )
