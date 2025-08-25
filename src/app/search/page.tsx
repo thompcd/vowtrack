@@ -4,6 +4,16 @@ import Image from 'next/image'
 
 interface PoliticianRow { id: number; name: string; position: string | null; party: string | null; image_url: string | null }
 interface PromiseRow { id: number; title: string; description: string | null; politician_id: number; politicians?: { id: number; name: string; image_url: string | null } | { id: number; name: string; image_url: string | null }[] | null }
+interface SearchItem {
+  type: 'politician' | 'promise'
+  id: number
+  title: string
+  subtitle: string
+  description?: string | null
+  image_url?: string | null
+  relevance: number
+  href: string
+}
 
 export const metadata = { title: 'Search - VowTrack' }
 
@@ -16,19 +26,23 @@ function score(q: string, text: string | null | undefined) {
   return 0
 }
 
-export default async function SearchPage({ searchParams }: { searchParams: { q?: string; page?: string } }) {
-  const q = (searchParams.q || '').trim()
+export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const resolved = await searchParams
+  const rawQ = resolved.q
+  const rawPage = resolved.page
+  const q = (Array.isArray(rawQ) ? rawQ[0] : rawQ || '').trim()
+  const pageParam = Array.isArray(rawPage) ? rawPage[0] : rawPage
   const pageSize = 20
-  const page = Math.max(parseInt(searchParams.page || '1', 10) || 1, 1)
+  const page = Math.max(parseInt(pageParam || '1', 10) || 1, 1)
 
-  let items: any[] = []
+  const items: SearchItem[] = []
   if (q) {
     const [{ data: pols }, { data: promises }] = await Promise.all([
       supabase.from('politicians').select('id, name, position, party, image_url').or(`name.ilike.%${q}%,position.ilike.%${q}%`),
       supabase.from('promises').select('id, title, description, politician_id, politicians:politician_id ( id, name, image_url )').or(`title.ilike.%${q}%,description.ilike.%${q}%`)
     ])
 
-    ;(pols || []).forEach(p => {
+    ;((pols || []) as PoliticianRow[]).forEach(p => {
       items.push({
         type: 'politician',
         id: p.id,
@@ -40,12 +54,10 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
       })
     })
 
-    ;(promises || []).forEach(pr => {
+    ;((promises || []) as PromiseRow[]).forEach(pr => {
       let pol: { id: number; name: string; image_url: string | null } | null = null
-      if (pr.politicians) {
-        if (Array.isArray(pr.politicians)) pol = pr.politicians[0] ?? null
-        else pol = pr.politicians
-      }
+      const rel = pr.politicians
+      if (rel) pol = Array.isArray(rel) ? rel[0] ?? null : rel
       items.push({
         type: 'promise',
         id: pr.id,

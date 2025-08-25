@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { calculatePoliticianScore } from '@/lib/scoring'
 
 interface RecentPromiseRow {
   id: number
@@ -18,13 +19,44 @@ interface NormalizedPromise {
   politician: { id: number; name: string; image_url: string | null } | null
 }
 
+interface PopularPolitician {
+  id: number
+  name: string
+  position: string | null
+  party: string | null
+  image_url: string | null
+  overall_score: number
+  grade: string
+  total_votes: number
+}
+
+interface VoteRow { vote_status: string }
+interface PromiseWithVotes { id: number; promise_votes: VoteRow[] | null }
+interface PoliticianWithPromises {
+  id: number
+  name: string
+  position: string | null
+  party: string | null
+  image_url: string | null
+  promises: PromiseWithVotes[] | null
+}
+
 export default async function Home() {
-  // Fetch latest promises with associated politician (limit 10)
-  const { data: recentPromiseRows } = await supabase
-    .from('promises')
-    .select(`id, title, date_made, politician_id, politicians:politician_id ( id, name, image_url )`)
-    .order('date_made', { ascending: false })
-    .limit(10)
+  // Fetch recent promises and politicians concurrently
+  const [recentPromiseResp, politiciansResp] = await Promise.all([
+    supabase
+      .from('promises')
+      .select(`id, title, date_made, politician_id, politicians:politician_id ( id, name, image_url )`)
+      .order('date_made', { ascending: false })
+      .limit(10),
+    supabase
+      .from('politicians')
+      .select(`id, name, position, party, image_url, promises(id, promise_votes(vote_status))`)
+      .limit(30)
+  ])
+
+  const recentPromiseRows = recentPromiseResp.data
+  const politicianRows = politiciansResp.data as PoliticianWithPromises[] | null
 
   const recentPromises: NormalizedPromise[] = (recentPromiseRows as RecentPromiseRow[] | null)?.map(r => {
     let politician: NormalizedPromise['politician'] = null
@@ -43,6 +75,28 @@ export default async function Home() {
     }
   }) ?? []
 
+  // Determine popular politicians by score & vote volume
+  const popularPoliticians: PopularPolitician[] = (politicianRows || []).map(p => {
+    const score = calculatePoliticianScore(
+      (p.promises || []).map(pr => ({
+        id: pr.id,
+        promise_votes: pr.promise_votes || []
+      }))
+    )
+    return {
+      id: p.id,
+      name: p.name,
+      position: p.position,
+      party: p.party,
+      image_url: p.image_url,
+      overall_score: score.overall_score,
+      grade: score.grade,
+      total_votes: score.total_votes
+    }
+  })
+  .sort((a, b) => b.overall_score - a.overall_score || b.total_votes - a.total_votes || a.name.localeCompare(b.name))
+  .slice(0, 5)
+
   return (
     <div className="min-h-screen bg-page py-12">
       <div className="max-w-6xl mx-auto px-4">
@@ -60,7 +114,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="grid gap-10 md:grid-cols-2 items-start">
+  <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3 items-start">
           {/* Left: Purpose & How It Works */}
           <section className="space-y-6">
             <div className="bg-surface border border-default rounded-lg p-6 shadow-sm">
@@ -89,11 +143,11 @@ export default async function Home() {
             </div>
           </section>
 
-          {/* Right: Recent Promises Feed */}
+          {/* Middle: Recent Promises Feed */}
             <section className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-semibold text-primary">Recent Promises</h2>
-                <Link href="/politicians" className="text-brand-primary text-sm hover:text-brand-primary-hover font-medium">View All →</Link>
+                <Link href="/search" className="text-brand-primary text-sm hover:text-brand-primary-hover font-medium">Search →</Link>
               </div>
               <div className="space-y-4">
                 {recentPromises.length > 0 ? (
@@ -131,6 +185,34 @@ export default async function Home() {
                 Want to improve this feed? <Link href="/request-feature" className="text-brand-primary hover:text-brand-primary-hover font-medium">Request a feature</Link>
               </div>
             </section>
+          {/* Right: Popular Politicians */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold text-primary">Notable Politicians</h2>
+              <Link href="/politicians" className="text-brand-primary text-sm hover:text-brand-primary-hover font-medium">All →</Link>
+            </div>
+            <div className="space-y-4">
+              {popularPoliticians.length > 0 ? popularPoliticians.map(p => (
+                <Link key={p.id} href={`/politicians/${p.id}`} className="block bg-surface border border-default rounded-lg p-4 hover:shadow transition-shadow">
+                  <div className="flex items-center gap-4">
+                    {p.image_url && (
+                      <Image src={p.image_url} alt={p.name} width={56} height={56} className="rounded-full object-cover" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-primary font-medium truncate">{p.name}</p>
+                      {p.position && <p className="text-secondary text-xs truncate">{p.position}</p>}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-brand-primary text-white">{p.overall_score}</span>
+                        <span className="text-xs text-muted">{p.grade}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )) : (
+                <div className="text-muted text-sm border border-dashed border-default rounded-lg p-6 text-center">No data yet.</div>
+              )}
+            </div>
+          </section>
         </div>
       </div>
     </div>

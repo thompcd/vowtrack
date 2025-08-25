@@ -1,10 +1,9 @@
 "use client"
 import Link from 'next/link'
 import Image from 'next/image'
-import AuthButton from './AuthButton'
-import ThemeSelector from './ThemeSelector'
 import SearchBar from './SearchBar'
 import { useState } from 'react'
+import UserMenu from './UserMenu'
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -23,9 +22,7 @@ export default function Header() {
           </div>
           {/* Desktop Right Controls (collapsed into menu on small screens) */}
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/politicians" className="text-secondary hover:text-brand-primary transition-colors">Politicians</Link>
-            <ThemeSelector />
-            <AuthButton />
+            <UserMenu />
           </div>
           {/* Mobile Menu Button */}
           <button
@@ -38,10 +35,8 @@ export default function Header() {
         </div>
         {menuOpen && (
           <div className="md:hidden mt-4 border-t border-default pt-4 space-y-4 animate-fade-in">
-            <div className="flex flex-wrap gap-3">
-              <Link href="/politicians" className="text-secondary hover:text-brand-primary transition-colors" onClick={() => setMenuOpen(false)}>Politicians</Link>
-              <ThemeSelector />
-              <AuthButton />
+            <div className="flex flex-wrap gap-4 items-center">
+              <UserMenu />
             </div>
           </div>
         )}
